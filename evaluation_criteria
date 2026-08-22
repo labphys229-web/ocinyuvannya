@@ -1,0 +1,925 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Оцінювання учнів з фізики (НУШ)</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Inter Font -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800 min-h-screen flex flex-col">
+
+    <header class="bg-indigo-600 text-white shadow-md py-4 px-6 mb-6">
+        <div class="max-w-6xl mx-auto flex flex-col sm:flex-row justify-between items-center gap-4">
+            <div>
+                <h1 class="text-2xl font-bold flex items-center gap-2">
+                    ⚡ Оцінювання з фізики (НУШ)
+                </h1>
+                <p class="text-indigo-200 text-sm">Інтерактивна система оцінювання за групами результатів</p>
+            </div>
+            <div class="flex gap-2">
+                <button onclick="switchTab('assessment')" id="btn-tab-assessment" class="px-4 py-2 bg-indigo-700 text-white font-medium rounded-lg shadow-sm transition hover:bg-indigo-800">
+                    Оцінювання
+                </button>
+                <button onclick="switchTab('registry')" id="btn-tab-registry" class="px-4 py-2 bg-indigo-500 text-white font-medium rounded-lg shadow-sm transition hover:bg-indigo-600">
+                    Журнал учнів
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <main class="max-w-6xl mx-auto px-4 w-full flex-grow mb-12">
+
+        <!-- ASSESSMENT TAB -->
+        <div id="tab-assessment" class="space-y-6">
+            
+            <!-- Step Selection Card -->
+            <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200 grid grid-cols-1 md:grid-cols-3 gap-6">
+                
+                <!-- Step 1: GR Selection -->
+                <div>
+                    <label class="block text-sm font-semibold text-slate-700 mb-2">Крок 1: Група результатів (ГР)</label>
+                    <select id="select-gr" onchange="onGrChange()" class="w-full p-3 bg-slate-50 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+                        <option value="">-- Оберіть ГР --</option>
+                        <option value="gr1">ГР1: Досліджує фізичні явища та процеси</option>
+                        <option value="gr2">ГР2: Опрацювання інформації</option>
+                        <option value="gr3">ГР3: Усвідомлює закономірності природи</option>
+                    </select>
+                </div>
+
+                <!-- Step 2: Indicator Selection -->
+                <div>
+                    <label class="block text-sm font-semibold text-slate-700 mb-2">Крок 2: Інтегрований показник</label>
+                    <select id="select-indicator" onchange="onIndicatorChange()" disabled class="w-full p-3 bg-slate-50 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none disabled:bg-slate-100 disabled:text-slate-400">
+                        <option value="">-- Спочатку оберіть ГР --</option>
+                    </select>
+                </div>
+
+                <!-- Step 3: Student Selection -->
+                <div>
+                    <label class="block text-sm font-semibold text-slate-700 mb-2">Крок 3: Учень / Учениця</label>
+                    <div class="flex gap-2">
+                        <select id="select-student" onchange="onStudentChange()" class="w-full p-3 bg-slate-50 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+                            <option value="">-- Оберіть учня --</option>
+                        </select>
+                        <button onclick="openAddStudentModal()" class="bg-indigo-50 text-indigo-600 p-3 rounded-lg border border-indigo-200 hover:bg-indigo-100 font-medium whitespace-nowrap" title="Додати нового учня">
+                            + Додати
+                        </button>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- Detailed Criteria Matrix Area -->
+            <div id="criteria-container" class="bg-white p-6 rounded-xl shadow-sm border border-slate-200 hidden">
+                <div class="flex justify-between items-center mb-6 border-b pb-4">
+                    <div>
+                        <h2 id="current-eval-title" class="text-xl font-bold text-slate-800">Матриця оцінювання</h2>
+                        <p id="current-eval-subtitle" class="text-sm text-slate-500">Оберіть відповідні рівні за критеріями для учня</p>
+                    </div>
+                    <div class="flex items-center gap-3">
+                        <div class="text-right">
+                            <span class="text-xs text-slate-400 block">Розрахований бал:</span>
+                            <span id="calculated-score" class="text-2xl font-extrabold text-indigo-600">--</span>
+                        </div>
+                        <button onclick="saveStudentAssessment()" class="bg-emerald-600 hover:bg-emerald-700 text-white font-medium px-5 py-2.5 rounded-lg shadow-sm transition">
+                            Зберегти оцінку
+                        </button>
+                    </div>
+                </div>
+
+                <div id="matrix-rows" class="space-y-6">
+                    <!-- Dynamic criteria rows will be injected here -->
+                </div>
+            </div>
+
+            <!-- Empty State -->
+            <div id="empty-state" class="bg-white p-12 rounded-xl shadow-sm border border-slate-200 text-center">
+                <div class="text-indigo-400 text-5xl mb-3">📋</div>
+                <h3 class="text-lg font-semibold text-slate-700">Розпочніть оцінювання</h3>
+                <p class="text-slate-500 text-sm max-w-md mx-auto mt-1">Виконайте кроки вище: оберіть групу результатів, показник та учня, щоб відкрити критеріальну матрицю.</p>
+            </div>
+
+        </div>
+
+        <!-- REGISTRY TAB -->
+        <div id="tab-registry" class="space-y-6 hidden">
+            <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
+                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+                    <div>
+                        <h2 class="text-xl font-bold text-slate-800">Журнал результатів учнів</h2>
+                        <p class="text-sm text-slate-500">Зведені дані оцінювання за групами результатів та показниками</p>
+                    </div>
+                    <div class="flex gap-2">
+                        <button onclick="openAddStudentModal()" class="bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium px-4 py-2 rounded-lg transition">
+                            + Додати учня
+                        </button>
+                        <button onclick="exportData()" class="bg-slate-100 hover:bg-slate-200 text-slate-700 text-sm font-medium px-4 py-2 rounded-lg transition border border-slate-300">
+                            Експорт JSON
+                        </button>
+                    </div>
+                </div>
+
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                            <tr class="bg-slate-100 text-slate-700 text-sm">
+                                <th class="p-3 border-b">ПІБ Учня / Учениці</th>
+                                <th class="p-3 border-b">ГР1 (Серреднє)</th>
+                                <th class="p-3 border-b">ГР2 (Середнє)</th>
+                                <th class="p-3 border-b">ГР3 (Середнє)</th>
+                                <th class="p-3 border-b text-right">Дії</th>
+                            </tr>
+                        </thead>
+                        <tbody id="registry-table-body">
+                            <!-- Populated dynamically -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- Add Student Modal -->
+    <div id="modal-add-student" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm hidden flex items-center justify-center p-4 z-50">
+        <div class="bg-white rounded-2xl shadow-xl max-w-md w-full p-6 space-y-4">
+            <h3 class="text-lg font-bold text-slate-800">Додати нового учня</h3>
+            <div>
+                <label class="block text-sm font-medium text-slate-600 mb-1">Прізвище та Ім'я учня</label>
+                <input type="text" id="input-student-name" placeholder="напр. Шевченко Тарас" class="w-full p-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+            </div>
+            <div class="flex justify-end gap-2 pt-2">
+                <button onclick="closeAddStudentModal()" class="px-4 py-2 text-slate-600 hover:bg-slate-100 rounded-lg font-medium">Скасувати</button>
+                <button onclick="addStudent()" class="px-5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg font-medium">Додати</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Custom Notification Modal -->
+    <div id="modal-notification" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm hidden flex items-center justify-center p-4 z-50">
+        <div class="bg-white rounded-2xl shadow-xl max-w-sm w-full p-6 text-center space-y-4">
+            <div id="notification-icon" class="text-4xl">✅</div>
+            <h4 id="notification-title" class="text-lg font-bold text-slate-800">Успішно</h4>
+            <p id="notification-message" class="text-sm text-slate-600">Дані збережено.</p>
+            <button onclick="closeNotification()" class="w-full py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-medium rounded-lg">Зрозуміло</button>
+        </div>
+    </div>
+
+    <script>
+        // Updated Rubric Data Structure
+        const rubricData = {
+            gr1: {
+                title: "ГР1: Досліджує фізичні явища та процеси",
+                indicators: [
+                    {
+                        id: "ind_1_1",
+                        name: "Пояснення та інтерпретація явища",
+                        criteriaName: "Конкретний критерій: Виконання спостереження та експерименту, інтерпретація явища",
+                        levels: {
+                            "1-3": [
+                                "1 - розпізнає з допомогою;",
+                                "2 - називає окремі ознаки;",
+                                "3 - описує фрагментарно"
+                            ],
+                            "4-6": [
+                                "4 - розуміє окремі властивості;",
+                                "5 - проводить прості вимірювання;",
+                                "6 - діє за готовим алгоритмом"
+                            ],
+                            "7-9": [
+                                "7 - пояснює суть самостійно;",
+                                "8 - правильно фіксує результати;",
+                                "9 — аналізує результати дослідження"
+                            ],
+                            "10-12": [
+                                "10 - аналізує складні явища;",
+                                "11 - виявляє приховані взаємозв'язки;",
+                                "12 - висуває та обґрунтовує гіпотези"
+                            ]
+                        }
+                    },
+                    {
+                        id: "ind_1_2",
+                        name: "Виконання дослідницьких дій",
+                        criteriaName: "Конкретний критерій: Виконання дій та експериментальних кроків",
+                        levels: {
+                            "1-3": [
+                                "1 - повторює дію за зразком з допомогою;",
+                                "2 - діє з підказками;",
+                                "3 - виконує під безпосереднім супроводом"
+                            ],
+                            "4-6": [
+                                "4 - пояснює за інструкцією;",
+                                "5 - описує за зразком;",
+                                "6 - переважно самостійно працює за алгоритмом"
+                            ],
+                            "7-9": [
+                                "7 - самостійно виконує етапи;",
+                                "8 - самостійно обирає спосіб;",
+                                "9 - самостійно коригує роботу"
+                            ],
+                            "10-12": [
+                                "10 - самостійно визначає стратегію;",
+                                "11 - обирає доцільні методи, планує;",
+                                "12 - обирає оптимальний шлях, коригує методику"
+                            ]
+                        }
+                    },
+                    {
+                        id: "ind_1_3",
+                        name: "Самостійність планування",
+                        criteriaName: "Конкретний критерій: Планування дослідження та рівень автономності",
+                        levels: {
+                            "1-3": [
+                                "1 - діє лише за допомогою;",
+                                "2 - потребує постійної підказки;",
+                                "3 - відтворює окремі елементи"
+                            ],
+                            "4-6": [
+                                "4 - виконує з окремими підказками;",
+                                "5 - виконує з детальною інструкцією;",
+                                "6 - діє за готовим алгоритмом самостійно"
+                            ],
+                            "7-9": [
+                                "7 - самостійно виконує завдання;",
+                                "8 - працює без сторонньої допомоги;",
+                                "9 - самостійно усуває похибки"
+                            ],
+                            "10-12": [
+                                "10 - самостійно аргументує результати;",
+                                "11- самостійно створює нові умови;",
+                                "12 - повна творча автономія"
+                            ]
+                        }
+                    },
+                    {
+                        id: "ind_1_4",
+                        name: "Презентація результатів",
+                        criteriaName: "Конкретний критерій: Чіткість, аргументованість та доказовість представлення",
+                        levels: {
+                            "1-3": [
+                                "1 - відповідає окремими словами;",
+                                "2 - формулює простий висновок з допомогою;",
+                                "3 - представляє результати фрагментарно"
+                            ],
+                            "4-6": [
+                                "4 - представляє результат за шаблоном;",
+                                "5 - пояснює отримані дані;",
+                                "6 - формулює простий висновок самостійно"
+                            ],
+                            "7-9": [
+                                "7 - чітко пояснює власний висновок;",
+                                "8 - аргументує висновок даними дослідження;",
+                                "9 - обґрунтовує результат дослідження"
+                            ],
+                            "10-12": [
+                                "10 - структуровано представляє результати;",
+                                "11 - захищає власні висновки;",
+                                "12 - переконливо представляє висновки"
+                            ]
+                        }
+                    },
+                    {
+                        id: "ind_1_5",
+                        name: "Стабільність та перенесення",
+                        criteriaName: "Конкретний критерій: Систематичність застосування та перенесення умінь",
+                        levels: {
+                            "1-3": [
+                                "1 - уміння практично не виявляє;",
+                                "2 - виявляє епізодично;",
+                                "3 - виявляє лише у знайомій ситуації та з допомогою"
+                            ],
+                            "4-6": [
+                                "4 - виявляє у простих ситуаціях;",
+                                "5 - виявляє у типових завданнях;",
+                                "6 - досить стабільно виявляє за алгоритмом"
+                            ],
+                            "7-9": [
+                                "7 - стабільно застосовує у зміненій ситуації;",
+                                "8 - застосовує у різних ситуаціях;",
+                                "9 - переносить уміння на нові умови"
+                            ],
+                            "10-12": [
+                                "10 - стабільно застосовує у складних ситуаціях;",
+                                "11 - переносить уміння на нові нестандартні ситуації;",
+                                "12 - системно застосовує у складних і нестандартних ситуаціях"
+                            ]
+                        }
+                    }
+                ]
+            },
+            gr2: {
+                title: "ГР2: Опрацювання інформації",
+                indicators: [
+                    {
+                        id: "ind_2_1",
+                        name: "Когнітивні процеси / Очікуваний результат: Знаходить, аналізує, порівнює та оцінює фізичну інформацію",
+                        criteriaName: "Конкретний критерій: Глибина розуміння та аналізу інформації",
+                        levels: {
+                            "1-3": [
+                                "1 - розпізнає окремі факти;",
+                                "2 - знаходить очевидну інформацію;",
+                                "3 - відтворює окремі відомості"
+                            ],
+                            "4-6": [
+                                "4 - знаходить потрібну інформацію;",
+                                "5 - описує за зразком;",
+                                "6 - порівнює прості дані за алгоритмом"
+                            ],
+                            "7-9": [
+                                "7 - самостійно аналізує дані;",
+                                "8 - встановлює залежності, порівнює та систематизує;",
+                                "9 - робить обґрунтовані висновки та інтерпретує інформацію"
+                            ],
+                            "10-12": [
+                                "10 - критично аналізує інформацію, формулює власні висновки;",
+                                "11 - виявляє суперечності;",
+                                "12 - узагальнює та створює власну інтерпретацію"
+                            ]
+                        }
+                    },
+                    {
+                        id: "ind_2_2",
+                        name: "Навчальна діяльність / Очікуваний результат: Працює з текстами, графіками, схемами, таблицями, моделями",
+                        criteriaName: "Конкретний критерій: Якість опрацювання фізичної інформації",
+                        levels: {
+                            "1-3": [
+                                "1 - зчитує окремі дані з допомогою;",
+                                "2 - знаходить задані дані у запропонованому джерелі;",
+                                "3 - відтворює інформацію за зразком"
+                            ],
+                            "4-6": [
+                                "4 - працює з інформацією за алгоритмом;",
+                                "5 - зчитує дані з графіка/таблиці;",
+                                "6 - виконує типове опрацювання самостійно"
+                            ],
+                            "7-9": [
+                                "7 - самостійно збирає потрібну інформацію;",
+                                "8 - обирає доцільне джерело;",
+                                "9 - самостійно перевіряє дані"
+                            ],
+                            "10-12": [
+                                "10 - інтегрує дані з різних джерел;",
+                                "11 - критично оцінює інформаційну модель;",
+                                "12 - створює власну модель/інтерпретації"
+                            ]
+                        }
+                    },
+                    {
+                        id: "ind_2_3",
+                        name: "Рівень самостійності / Очікуваний результат: Самостійно здійснює пошук і добір інформації",
+                        criteriaName: "Конкретний критерій: Самостійність пошуку та добору",
+                        levels: {
+                            "1-3": [
+                                "1 - працює лише за прямою вказівкою та допомогою;",
+                                "2 - використовує запропоноване джерело з допомогою;",
+                                "3 - знаходить інформацію з підказками"
+                            ],
+                            "4-6": [
+                                "4 - працює за визначеним алгоритмом;",
+                                "5 - користується заданими джерелами;",
+                                "6 - знаходить потрібне самостійно"
+                            ],
+                            "7-9": [
+                                "7 - самостійно визначає джерело;",
+                                "8 - обирає оптимальний шлях пошуку;",
+                                "9 - самостійно добирає літературу/дані"
+                            ],
+                            "10-12": [
+                                "10 - сам визначає стратегію пошуку;",
+                                "11 - критично оцінює джерела;",
+                                "12 - обґрунтовує вибір джерел і спосіб опрацювання"
+                            ]
+                        }
+                    },
+                    {
+                        id: "ind_2_4",
+                        name: "Комунікація та взаємодія / Очікуваний результат: Представляє результати пошуку та опрацювання інформації",
+                        criteriaName: "Конкретний критерій: Структурованість і доказовість представлення",
+                        levels: {
+                            "1-3": [
+                                "1 - відтворює окремі факти;",
+                                "2 - повідомляє інформацію фрагментарно;",
+                                "3 - представляє інформацію з допомогою"
+                            ],
+                            "4-6": [
+                                "4 - представляє матеріал за зразком;",
+                                "5 - послідовно повідомляє основну інформацію;",
+                                "6 - пояснює отримані відомості"
+                            ],
+                            "7-9": [
+                                "7 - структуровано представляє інформацію;",
+                                "8 - аргументує твердження;",
+                                "9 - використовує докази та фізичні дані"
+                            ],
+                            "10-12": [
+                                "10 - створює аргументоване представлення;",
+                                "11 - зіставляє різні позиції/джерела;",
+                                "12 - переконливо захищає власні висновки"
+                            ]
+                        }
+                    },
+                    {
+                        id: "ind_2_5",
+                        name: "Частота вияву вмінь / Очікуваний результат: Систематично застосовує інформаційні вміння",
+                        criteriaName: "Конкретний критерій: Стабільність роботи з інформацією",
+                        levels: {
+                            "1-3": [
+                                "1 - вміння не сформоване;",
+                                "2 - виявляється епізодично;",
+                                "3 - виявляється лише у знайомій ситуації"
+                            ],
+                            "4-6": [
+                                "4 - виявляє у простих ситуаціях;",
+                                "5 - у типових завданнях;",
+                                "6 - стабільно за алгоритмом"
+                            ],
+                            "7-9": [
+                                "7 - застосовує у різних ситуаціях;",
+                                "8 - переносить на змінені ситуації;",
+                                "9 - стабільно демонструє у нових завданнях"
+                            ],
+                            "10-12": [
+                                "10 - застосовує у складних ситуаціях;",
+                                "11 - переносить у нестандартних ситуаціях;",
+                                "12 - системно застосовує уміння у будь-яких умовах"
+                            ]
+                        }
+                    }
+                ]
+            },
+            gr3: {
+                title: "ГР3: Усвідомлює закономірності природи",
+                indicators: [
+                    {
+                        id: "ind_3_1",
+                        name: "Когнітивні процеси / Очікуваний результат: Пояснює фізичні явища та процеси на основі законів і закономірностей",
+                        criteriaName: "Конкретний критерій: Аналіз та критичне оцінювання",
+                        levels: {
+                            "1-3": [
+                                "1 - розпізнає явище/фізичну величину;",
+                                "2 - називає поняття/величину/закон;",
+                                "3 - відтворює окремі відомості"
+                            ],
+                            "4-6": [
+                                "4 - відтворює визначення;",
+                                "5 - описує явище за зразком;",
+                                "6 - пояснює просте явище"
+                            ],
+                            "7-9": [
+                                "7 - самостійно пояснює явище;",
+                                "8 - встановлює причинно-наслідкові зв'язки;",
+                                "9 - пояснює закономірність на основі фізичних законів"
+                            ],
+                            "10-12": [
+                                "10 - системно аналізує явище;",
+                                "11 - встановлює складні взаємозв'язки;",
+                                "12 - будує цілісне фізичне пояснення"
+                            ]
+                        }
+                    },
+                    {
+                        id: "ind_3_2",
+                        name: "Навчальна діяльність / Очікуваний результат: Застосовує фізичні закони, закономірності та моделі",
+                        criteriaName: "Конкретний критерій: Правильність і доцільність застосування",
+                        levels: {
+                            "1-3": [
+                                "1 - відтворює окрему формулу;",
+                                "2 - підставляє дані за зразком з допомогою;",
+                                "3 - виконує окремі дії"
+                            ],
+                            "4-6": [
+                                "4 - застосовує формулу за алгоритмом;",
+                                "5 - розв'язує просту типову задачу;",
+                                "6 - розв'язує стандартну задачу"
+                            ],
+                            "7-9": [
+                                "7 - самостійно застосовує закон;",
+                                "8 - обирає доцільний спосіб;",
+                                "9 - розв'язує змінену/комбіновану задачу"
+                            ],
+                            "10-12": [
+                                "10 - аналізує складну нестандартну задачу;",
+                                "11 - розв'язує нову фізичну ситуацію та обґрунтовує модель;",
+                                "12 - моделює нову фізичну ситуацію"
+                            ]
+                        }
+                    },
+                    {
+                        id: "ind_3_3",
+                        name: "Рівень самостійності / Очікуваний результат: Самостійно обирає фізичні закони та спосіб розв'язання",
+                        criteriaName: "Конкретний критерій: Прийняття рішень та самостійність",
+                        levels: {
+                            "1-3": [
+                                "1 - діє лише за запропонованим способом чи підказкою;",
+                                "2 - повторює з постійною допомогою;",
+                                "3 - виконує алгоритм з окремими підказками"
+                            ],
+                            "4-6": [
+                                "4 - використовує готовий алгоритм;",
+                                "5 - виконує завдання з окремими підказками;",
+                                "6 - переважно самостійно працює за алгоритмом"
+                            ],
+                            "7-9": [
+                                "7 - самостійно визначає потрібний закон;",
+                                "8 - обирає спосіб розв'язання;",
+                                "9 - самостійно коригує рішення"
+                            ],
+                            "10-12": [
+                                "10 - визначає власну стратегію;",
+                                "11 - комбінує способи;",
+                                "12 - створює та обґрунтовує власну стратегію"
+                            ]
+                        }
+                    },
+                    {
+                        id: "ind_3_4",
+                        name: "Комунікація та взаємодія / Очікуваний результат: Аргументує фізичне пояснення та розв'язання",
+                        criteriaName: "Конкретний критерій: Аргументація та оформлення розв'язання",
+                        levels: {
+                            "1-3": [
+                                "1 - записує окремі кроки з допомогою;",
+                                "2 - озвучує кінцеву відповідь;",
+                                "3 - коментує дії за підказкою"
+                            ],
+                            "4-6": [
+                                "4 - оформлює задачу за зразком;",
+                                "5 - коментує окремі кроки типового розв'язку;",
+                                "6 - пояснює хід розв'язання"
+                            ],
+                            "7-9": [
+                                "7 - чітко обґрунтовує кожен етап;",
+                                "8 - структурує запис;",
+                                "9 - пояснює отриманий результат"
+                            ],
+                            "10-12": [
+                                "10 - аргументовано захищає розв'язок;",
+                                "11 - переконливо доводить правильність;",
+                                "12 - відстоює обрану фізичну модель"
+                            ]
+                        }
+                    },
+                    {
+                        id: "ind_3_5",
+                        name: "Частота вияву вмінь / Очікуваний результат: Стабільність перенесення знань",
+                        criteriaName: "Конкретний критерій: Систематичність застосування законів фізики",
+                        levels: {
+                            "1-3": [
+                                "1 - уміння практично не виявляє;",
+                                "2 - виявляє епізодично;",
+                                "3 - застосовує лише у знайомій ситуації з допомогою"
+                            ],
+                            "4-6": [
+                                "4 - застосовує у простій ситуації;",
+                                "5 - у типових завданнях;",
+                                "6 - стабільно за відомим алгоритмом"
+                            ],
+                            "7-9": [
+                                "7 - стабільно застосовує;",
+                                "8 - переносить знання на змінені ситуації;",
+                                "9 - застосовує у різних ситуаціях"
+                            ],
+                            "10-12": [
+                                "10 - переносить знання на складні ситуації;",
+                                "11 - застосовує у нестандартних ситуаціях;",
+                                "12 - системно переносить знання на нові умови"
+                            ]
+                        }
+                    }
+                ]
+            }
+        };
+
+        // Application State
+        let appState = {
+            students: [
+                { id: "s1", name: "Коваленко Іван" },
+                { id: "s2", name: "Мельник Софія" },
+                { id: "s3", name: "Шевченко Олександр" }
+            ],
+            assessments: {} // studentId -> { grId_indId: score }
+        };
+
+        // Load data from localStorage if available
+        function loadData() {
+            const saved = localStorage.getItem('physics_assessment_app_data');
+            if (saved) {
+                try {
+                    appState = JSON.parse(saved);
+                } catch(e) {
+                    console.error("Помилка завантаження даних", e);
+                }
+            }
+        }
+
+        // Save data to localStorage
+        function saveData() {
+            localStorage.setItem('physics_assessment_app_data', JSON.stringify(appState));
+        }
+
+        // Tab Switching
+        function switchTab(tabName) {
+            const assessmentTab = document.getElementById('tab-assessment');
+            const registryTab = document.getElementById('tab-registry');
+            const btnAssess = document.getElementById('btn-tab-assessment');
+            const btnRegistry = document.getElementById('btn-tab-registry');
+
+            if (tabName === 'assessment') {
+                assessmentTab.classList.remove('hidden');
+                registryTab.classList.add('hidden');
+                btnAssess.className = "px-4 py-2 bg-indigo-700 text-white font-medium rounded-lg shadow-sm transition hover:bg-indigo-800";
+                btnRegistry.className = "px-4 py-2 bg-indigo-500 text-white font-medium rounded-lg shadow-sm transition hover:bg-indigo-600";
+            } else {
+                assessmentTab.classList.add('hidden');
+                registryTab.classList.remove('hidden');
+                btnRegistry.className = "px-4 py-2 bg-indigo-700 text-white font-medium rounded-lg shadow-sm transition hover:bg-indigo-800";
+                btnAssess.className = "px-4 py-2 bg-indigo-500 text-white font-medium rounded-lg shadow-sm transition hover:bg-indigo-600";
+                renderRegistryTable();
+            }
+        }
+
+        // Initialization
+        window.onload = function() {
+            loadData();
+            updateStudentDropdown();
+        };
+
+        function updateStudentDropdown() {
+            const select = document.getElementById('select-student');
+            const currentVal = select.value;
+            select.innerHTML = '<option value="">-- Оберіть учня --</option>';
+            appState.students.forEach(s => {
+                const opt = document.createElement('option');
+                opt.value = s.id;
+                opt.textContent = s.name;
+                select.appendChild(opt);
+            });
+            select.value = currentVal;
+        }
+
+        // Step 1: GR Change Handler
+        function onGrChange() {
+            const grKey = document.getElementById('select-gr').value;
+            const indSelect = document.getElementById('select-indicator');
+            
+            indSelect.innerHTML = '<option value="">-- Оберіть інтегрований показник --</option>';
+            
+            if (!grKey) {
+                indSelect.disabled = true;
+                hideCriteriaMatrix();
+                return;
+            }
+
+            indSelect.disabled = false;
+            const gr = rubricData[grKey];
+            gr.indicators.forEach((ind, index) => {
+                const opt = document.createElement('option');
+                opt.value = index;
+                opt.textContent = `${index + 1}. ${ind.name}`;
+                indSelect.appendChild(opt);
+            });
+
+            hideCriteriaMatrix();
+        }
+
+        // Step 2: Indicator Change Handler
+        function onIndicatorChange() {
+            checkAndRenderMatrix();
+        }
+
+        // Step 3: Student Change Handler
+        function onStudentChange() {
+            checkAndRenderMatrix();
+        }
+
+        function checkAndRenderMatrix() {
+            const grKey = document.getElementById('select-gr').value;
+            const indIndex = document.getElementById('select-indicator').value;
+            const studentId = document.getElementById('select-student').value;
+
+            if (grKey !== "" && indIndex !== "" && studentId !== "") {
+                renderCriteriaMatrix(grKey, parseInt(indIndex), studentId);
+            } else {
+                hideCriteriaMatrix();
+            }
+        }
+
+        function hideCriteriaMatrix() {
+            document.getElementById('criteria-container').classList.add('hidden');
+            document.getElementById('empty-state').classList.remove('hidden');
+        }
+
+        // Render Matrix Table for Scoring
+        function renderCriteriaMatrix(grKey, indIndex, studentId) {
+            const gr = rubricData[grKey];
+            const indicator = gr.indicators[indIndex];
+            
+            document.getElementById('current-eval-title').textContent = gr.title;
+            document.getElementById('current-eval-subtitle').textContent = indicator.name;
+
+            const rowsContainer = document.getElementById('matrix-rows');
+            rowsContainer.innerHTML = '';
+
+            // Get existing score for this student, gr, indicator
+            const studentAssessments = appState.assessments[studentId] || {};
+            const key = `${grKey}_${indicator.id}`;
+            const currentSelectedScore = studentAssessments[key] || 0;
+
+            // We create 4 column blocks for score ranges: 1-3, 4-6, 7-9, 10-12
+            const scoreRanges = [
+                { range: "1-3", label: "1-3 бали (Початковий)", color: "border-rose-200 bg-rose-50/50" },
+                { range: "4-6", label: "4-6 балів (Середній)", color: "border-amber-200 bg-amber-50/50" },
+                { range: "7-9", label: "7-9 балів (Достатній)", color: "border-blue-200 bg-blue-50/50" },
+                { range: "10-12", label: "10-12 балів (Високий)", color: "border-emerald-200 bg-emerald-50/50" }
+            ];
+
+            const gridDiv = document.createElement('div');
+            gridDiv.className = "grid grid-cols-1 md:grid-cols-4 gap-4";
+
+            scoreRanges.forEach(sr => {
+                const colDiv = document.createElement('div');
+                colDiv.className = `p-4 rounded-xl border ${sr.color} flex flex-col justify-between`;
+
+                let innerHtml = `<h4 class="font-bold text-slate-700 text-sm mb-3 pb-2 border-b border-slate-200">${sr.label}</h4>`;
+                innerHtml += `<div class="space-y-2 mb-4">`;
+
+                const descriptions = indicator.levels[sr.range] || [];
+                descriptions.forEach(desc => {
+                    innerHtml += `
+                        <label class="flex items-start gap-2 text-xs text-slate-600 bg-white p-2.5 rounded-lg border border-slate-200 cursor-pointer hover:border-indigo-300 transition">
+                            <input type="radio" name="criteria_choice" value="${sr.range}" data-desc="${desc}" class="mt-0.5 text-indigo-600 focus:ring-indigo-500" ${isDescriptionSelected(currentSelectedScore, sr.range, desc) ? 'checked' : ''} onchange="updateCalculatedScore()">
+                            <span>${desc}</span>
+                        </label>
+                    `;
+                });
+
+                innerHtml += `</div>`;
+                colDiv.innerHTML = innerHtml;
+                gridDiv.appendChild(colDiv);
+            });
+
+            rowsContainer.appendChild(gridDiv);
+
+            document.getElementById('criteria-container').classList.remove('hidden');
+            document.getElementById('empty-state').classList.add('hidden');
+            updateCalculatedScore();
+        }
+
+        function isDescriptionSelected(savedScore, range, desc) {
+            if (!savedScore) return false;
+            const [min, max] = range.split('-').map(Number);
+            return savedScore >= min && savedScore <= max;
+        }
+
+        function updateCalculatedScore() {
+            const radios = document.querySelectorAll('input[name="criteria_choice"]:checked');
+            const scoreDisplay = document.getElementById('calculated-score');
+            if (radios.length > 0) {
+                const range = radios[0].value;
+                const [min, max] = range.split('-').map(Number);
+                const midScore = Math.round((min + max) / 2);
+                scoreDisplay.textContent = `${midScore} б.`;
+            } else {
+                scoreDisplay.textContent = "--";
+            }
+        }
+
+        function saveStudentAssessment() {
+            const studentId = document.getElementById('select-student').value;
+            const grKey = document.getElementById('select-gr').value;
+            const indIndex = document.getElementById('select-indicator').value;
+            const radios = document.querySelectorAll('input[name="criteria_choice"]:checked');
+
+            if (!studentId || grKey === "" || indIndex === "") {
+                showNotification("Помилка", "Оберіть учня, ГР та показник.", "❌");
+                return;
+            }
+
+            if (radios.length === 0) {
+                showNotification("Увага", "Будь ласка, оберіть відповідний рівень досягнень у критеріях.", "⚠️");
+                return;
+            }
+
+            const range = radios[0].value;
+            const [min, max] = range.split('-').map(Number);
+            const score = Math.round((min + max) / 2);
+
+            const gr = rubricData[grKey];
+            const indicator = gr.indicators[indIndex];
+            const key = `${grKey}_${indicator.id}`;
+
+            if (!appState.assessments[studentId]) {
+                appState.assessments[studentId] = {};
+            }
+            appState.assessments[studentId][key] = score;
+
+            saveData();
+            showNotification("Збережено!", "Оцінку успішно збережено в системі.", "✅");
+        }
+
+        // Modal Management for Students
+        function openAddStudentModal() {
+            document.getElementById('input-student-name').value = '';
+            document.getElementById('modal-add-student').classList.remove('hidden');
+        }
+
+        function closeAddStudentModal() {
+            document.getElementById('modal-add-student').classList.add('hidden');
+        }
+
+        function addStudent() {
+            const nameInput = document.getElementById('input-student-name');
+            const name = nameInput.value.trim();
+            if (!name) {
+                showNotification("Помилка", "Введіть прізвище та ім'я учня.", "❌");
+                return;
+            }
+
+            const newId = 's_' + Date.now();
+            appState.students.push({ id: newId, name: name });
+            saveData();
+            updateStudentDropdown();
+            closeAddStudentModal();
+            showNotification("Успіх", `Учня ${name} додано до журналу.`, "✅");
+        }
+
+        // Notifications
+        function showNotification(title, message, icon) {
+            document.getElementById('notification-title').textContent = title;
+            document.getElementById('notification-message').textContent = message;
+            document.getElementById('notification-icon').textContent = icon;
+            document.getElementById('modal-notification').classList.remove('hidden');
+        }
+
+        function closeNotification() {
+            document.getElementById('modal-notification').classList.add('hidden');
+        }
+
+        // Registry Table rendering
+        function renderRegistryTable() {
+            const tbody = document.getElementById('registry-table-body');
+            tbody.innerHTML = '';
+
+            if (appState.students.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="5" class="p-6 text-center text-slate-400">Список учнів порожній. Додайте учнів через вкладку оцінювання або журнал.</td></tr>`;
+                return;
+            }
+
+            appState.students.forEach(student => {
+                const studentAssessments = appState.assessments[student.id] || {};
+                
+                let gr1Scores = [], gr2Scores = [], gr3Scores = [];
+                
+                Object.keys(studentAssessments).forEach(k => {
+                    if (k.startsWith('gr1_')) gr1Scores.push(studentAssessments[k]);
+                    if (k.startsWith('gr2_')) gr2Scores.push(studentAssessments[k]);
+                    if (k.startsWith('gr3_')) gr3Scores.push(studentAssessments[k]);
+                });
+
+                const avgGr1 = gr1Scores.length ? (gr1Scores.reduce((a,b)=>a+b,0) / gr1Scores.length).toFixed(1) : '-';
+                const avgGr2 = gr2Scores.length ? (gr2Scores.reduce((a,b)=>a+b,0) / gr2Scores.length).toFixed(1) : '-';
+                const avgGr3 = gr3Scores.length ? (gr3Scores.reduce((a,b)=>a+b,0) / gr3Scores.length).toFixed(1) : '-';
+
+                const tr = document.createElement('tr');
+                tr.className = "border-b hover:bg-slate-50 transition";
+                tr.innerHTML = `
+                    <td class="p-3 font-medium text-slate-800">${student.name}</td>
+                    <td class="p-3 text-indigo-600 font-semibold">${avgGr1}</td>
+                    <td class="p-3 text-indigo-600 font-semibold">${avgGr2}</td>
+                    <td class="p-3 text-indigo-600 font-semibold">${avgGr3}</td>
+                    <td class="p-3 text-right">
+                        <button onclick="deleteStudent('${student.id}')" class="text-rose-500 hover:text-rose-700 text-xs px-2.5 py-1 bg-rose-50 rounded border border-rose-200">Видалити</button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        function deleteStudent(studentId) {
+            if (confirm("Ви дійсно хочете видалити цього учня та всі його оцінки?")) {
+                appState.students = appState.students.filter(s => s.id !== studentId);
+                delete appState.assessments[studentId];
+                saveData();
+                updateStudentDropdown();
+                renderRegistryTable();
+            }
+        }
+
+        function exportData() {
+            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(appState, null, 2));
+            const downloadAnchor = document.createElement('a');
+            downloadAnchor.setAttribute("href", dataStr);
+            downloadAnchor.setAttribute("download", "physics_assessment_data.json");
+            document.body.appendChild(downloadAnchor);
+            downloadAnchor.click();
+            downloadAnchor.remove();
+        }
+    </script>
+</body>
+</html>
